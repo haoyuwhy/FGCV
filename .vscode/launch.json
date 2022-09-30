@@ -1,0 +1,39 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "with dist",
+            "type": "python",
+            "request": "launch",
+            "program": "D:/tool/python39/Lib/site-packages/torch/distributed/launch.py",
+            "args": [
+                "--nproc_per_node=1",
+                "--master_port=4559",
+                "train.py",
+                "-opt",
+                "options/fgcv.yml",
+                "--auto_resume",
+                "--launcher",
+                "pytorch"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "nodist",
+            "type": "python",
+            "request": "launch",
+            "program": "train.py",
+            "args": [
+                "-opt",
+                "options/fgcv.yml",
+                "--auto_resume"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+    ]
+}

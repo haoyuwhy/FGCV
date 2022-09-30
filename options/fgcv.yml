@@ -5,6 +5,7 @@ dataroot: F:/ImageData/CUB_200_2011/images
 resize_size: 510
 data_size: 384
 auto_resume: 1
+val_rate: 0.1
 
 datasets:
   train:
@@ -12,6 +13,7 @@ datasets:
     type: FGCVDataset
     batch_size_per_gpu: 20
     num_worker_per_gpu: 0
+    
   val:
     name: CUB_200_2011_val
     type: FGCVDataset

@@ -52,7 +52,7 @@ def create_train_val_dataloader(opt, logger):
                                    transforms.CenterCrop((opt["data_size"], opt["data_size"])),
                                    transforms.ToTensor(),
                                    normalize])}
-    train_images_path, train_images_label, val_images_path, val_images_label = read_split_data(opt['dataroot'])
+    train_images_path, train_images_label, val_images_path, val_images_label = read_split_data(opt['dataroot'],opt["val_rate"])
     opt["lables"]=len(list(set(train_images_label)))
     for phase, dataset_opt in opt['datasets'].items():
         if phase == 'train':

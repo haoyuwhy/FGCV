@@ -18,6 +18,7 @@ import data
 import models
 import archs
 import losses
+
 def init_tb_loggers(opt):
     # initialize wandb logger before tensorboard logger to allow proper sync
     if (opt['logger'].get('wandb') is not None) and (opt['logger']['wandb'].get('project')

@@ -8,7 +8,7 @@ from torch.utils import data as data
 
 
 @DATASET_REGISTRY.register()
-class FGCVDataset(Dataset):
+class FGVCDataset(Dataset):
     """自定义数据集"""
 
     def __init__(self, opt):

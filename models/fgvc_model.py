@@ -13,9 +13,9 @@ from basicsr.utils.registry import MODEL_REGISTRY
 from .base_model import BaseModel
 
 @MODEL_REGISTRY.register()
-class FGCV(BaseModel):
+class FGVC(BaseModel):
     def __init__(self, opt):
-        super(FGCV, self).__init__(opt)
+        super(FGVC, self).__init__(opt)
         opt['network_g']["lables"]=opt["lables"]
         # define network
         self.net_g = build_network(opt['network_g'])

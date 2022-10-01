@@ -14,7 +14,7 @@
                 "--master_port=4559",
                 "train.py",
                 "-opt",
-                "options/fgcv.yml",
+                "options/fgvc.yml",
                 "--auto_resume",
                 "--launcher",
                 "pytorch"
@@ -29,7 +29,7 @@
             "program": "train.py",
             "args": [
                 "-opt",
-                "options/fgcv.yml",
+                "options/fgvc.yml",
                 "--auto_resume"
             ],
             "console": "integratedTerminal",

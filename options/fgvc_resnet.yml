@@ -1,0 +1,80 @@
+name: FGVC_resnet
+model_type: FGVC
+num_gpu: auto
+dataroot: /root/autodl-tmp/CUB_200_2011/images
+resize_size: 510
+data_size: 384
+auto_resume: 1
+val_rate: 0.1
+
+datasets:
+  train:
+    name: CUB_200_2011
+    type: FGVCDataset
+    batch_size_per_gpu: 1
+    num_worker_per_gpu: 0
+    
+  val:
+    name: CUB_200_2011_val
+    type: FGVCDataset
+
+
+network_g:
+  type: resnet
+  # name: resnet50
+  pretrained: False
+
+# network_g:
+#   type: SwinTransfomer
+#   # name: resnet50
+#   pretrain: False
+
+
+path:
+  pretrain_network_fgcv: ~
+  strict_load_fgcv: true
+  resume_state: ~
+
+
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 2e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: CosineAnnealingRestartLR
+    periods: [300000]
+    restart_weights: [1]
+    eta_min: !!float 1e-7
+  
+  CrossentropyLoss_opt:
+    type: CrossentropyLoss
+    loss_weight: 1.0
+
+
+  total_iter: 300000
+  warmup_iter: -1  # no warm up
+
+
+val:
+  val_freq: !!float 2e3
+  save_img: false
+  pbar: True
+
+logger:
+  print_freq: 10
+  save_checkpoint_freq: 2000
+  use_tb_logger: true
+  wandb:
+    project: ~
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500
+
+# find_unused_parameters: true

@@ -1,17 +1,26 @@
-name: FGCV
-model_type: FGCV
+name: FGVC_Swin
+model_type: FGVC_PIM
 num_gpu: auto
-dataroot: F:/ImageData/CUB_200_2011/images
+dataroot: /root/autodl-tmp/CUB_200_2011/images
 resize_size: 510
 data_size: 384
 auto_resume: 1
 val_rate: 0.1
 
+use_selection: True
+use_amp: True
+use_fpn: True
+use_combiner: True
+lambda_b: 0.5
+lambda_s: 0.0
+lambda_n: 5.0
+lambda_c: 1.0
+
 datasets:
   train:
     name: CUB_200_2011
     type: FGVCDataset
-    batch_size_per_gpu: 20
+    batch_size_per_gpu: 1
     num_worker_per_gpu: 0
     
   val:
@@ -20,10 +29,8 @@ datasets:
 
 
 network_g:
-  type: resnet
-  name: resnet50
-  pretrained: True
-
+  type: SwinTransfomer
+  pretrain: False
 
 
 path:
@@ -33,7 +40,7 @@ path:
 
 
 train:
-  ema_decay: 0.999
+  # ema_decay: 0.999
   optim_g:
     type: Adam
     lr: !!float 2e-4
@@ -56,13 +63,13 @@ train:
 
 
 val:
-  val_freq: !!float 2e3
+  val_freq: !!float 1000
   save_img: false
   pbar: True
 
 logger:
   print_freq: 100
-  save_checkpoint_freq: 2000
+  save_checkpoint_freq: 1000
   use_tb_logger: true
   wandb:
     project: ~

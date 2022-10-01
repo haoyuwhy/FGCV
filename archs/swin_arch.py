@@ -17,7 +17,8 @@ def build_swintransformer(pretrained: bool = True,
                           use_selection: bool = True,
                           num_classes: int = 200,
                           use_combiner: bool = True,
-                          comb_proj_size: Union[int, None] = None):
+                          comb_proj_size: Union[int, None] = None,
+                          **kwargs):
     """
     This function is to building swin transformer. timm swin-transformer + torch.fx.proxy.Proxy 
     could cause error, so we set return_nodes to None and change swin-transformer model script to
@@ -36,7 +37,7 @@ def build_swintransformer(pretrained: bool = True,
             'layer4':32
         }
 
-    backbone = timm.create_model('swin_large_patch4_window12_384_in22k', pretrained=pretrained)
+    backbone = timm.create_model('swin_large_patch4_window12_384_in22k', pretrained=pretrained,**kwargs)
 
     # print(backbone)
     # print(get_graph_node_names(backbone))
@@ -58,9 +59,9 @@ def build_swintransformer(pretrained: bool = True,
 
 @ARCH_REGISTRY.register()
 class SwinTransfomer(nn.Module):
-    def __init__(self,pretrain=False,lables=200,) -> None:
+    def __init__(self,pretrain=False,lables=200,**kwargs) -> None:
         super(SwinTransfomer,self).__init__()
-        self.net=build_swintransformer(pretrain,num_classes=lables)
+        self.net=build_swintransformer(pretrain,num_classes=lables,**kwargs)
     
     def forward(self,x):
         return self.net(x)

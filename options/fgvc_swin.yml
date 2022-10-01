@@ -20,7 +20,7 @@ datasets:
   train:
     name: CUB_200_2011
     type: FGVCDataset
-    batch_size_per_gpu: 1
+    batch_size_per_gpu: 4
     num_worker_per_gpu: 0
     
   val:
@@ -31,6 +31,7 @@ datasets:
 network_g:
   type: SwinTransfomer
   pretrain: False
+  use_checkpoint: True
 
 
 path:
@@ -40,7 +41,7 @@ path:
 
 
 train:
-  # ema_decay: 0.999
+  ema_decay: 0.999
   optim_g:
     type: Adam
     lr: !!float 2e-4

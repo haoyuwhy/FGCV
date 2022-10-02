@@ -4,7 +4,7 @@ import torch
 from collections import OrderedDict
 from os import path as osp
 from tqdm import tqdm
-
+from copy import deepcopy
 from basicsr.archs import build_network
 from basicsr.losses import build_loss
 from basicsr.metrics import calculate_metric
@@ -25,11 +25,12 @@ class FGVC(BaseModel):
         # load pretrained models
         load_path = self.opt['path'].get('pretrain_network_g', None)
         if load_path is not None:
-            param_key = self.opt['path'].get('param_key_fgcv', 'params')
+            param_key = self.opt['path'].get('param_key_g', 'params')
             self.load_network(self.net_g, load_path, self.opt['path'].get('strict_load_g', True), param_key)
 
         if self.is_train:
             self.init_training_settings()
+
 
     def init_training_settings(self):
         self.net_g.train()

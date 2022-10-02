@@ -36,8 +36,9 @@ network_g:
 
 
 path:
-  pretrain_network_fgcv: ~
-  strict_load_fgcv: true
+  pretrain_network_g: E:\swin_large_patch4_window12_384_22k.pth
+  param_key_g: "model"
+  strict_load_g: False
   resume_state: ~
 
 

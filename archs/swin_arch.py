@@ -31,9 +31,9 @@ def build_swintransformer(pretrained: bool = True,
 
     if num_selects is None:
         num_selects = {
-            'layer1':32,
-            'layer2':32,
-            'layer3':32,
+            'layer1':2048,
+            'layer2':512,
+            'layer3':128,
             'layer4':32
         }
 

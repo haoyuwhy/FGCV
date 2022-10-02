@@ -249,7 +249,7 @@ class FGVC_PIM(BaseModel):
         # add a dataset record
         record = dict()
         record["acc"] = dict(better='higher', val=float('-inf'), iter=-1)
-        record["loss"] = dict(better="lower", val=float('inf'), iter=-1)
+        # record["loss"] = dict(better="lower", val=float('inf'), iter=-1)
         self.best_metric_results[dataset_name] = record
 
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
@@ -273,6 +273,9 @@ class FGVC_PIM(BaseModel):
                     this_name = "layer" + str(i)
                     _cal_evalute_metric(corrects, total_samples, self.output[this_name].mean(1), self.lables, this_name, scores, score_names)
             _average_top_k_result(corrects, total_samples, scores, self.lables,tops=[i for i in range(1, 5)])
+            if self.opt["use_combiner"]:
+                this_name = "combiner"
+                _cal_evalute_metric(corrects, total_samples, self.output["comb_outs"], self.lables, this_name, scores, score_names)
             # loss=self.crossentropyLoss(self.output, self.lables)
             # if self.output.argmax()==self.lables:
             #     self.metric_results["acc"]+=1

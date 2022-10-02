@@ -1,7 +1,7 @@
 name: FGVC_Swin
 model_type: FGVC_PIM
 num_gpu: auto
-dataroot: /root/autodl-tmp/CUB_200_2011/images
+dataroot: F:\ImageData\CUB_200_2011\images
 resize_size: 510
 data_size: 384
 auto_resume: 1
@@ -20,7 +20,7 @@ datasets:
   train:
     name: CUB_200_2011
     type: FGVCDataset
-    batch_size_per_gpu: 4
+    batch_size_per_gpu: 1
     num_worker_per_gpu: 0
     
   val:
@@ -64,12 +64,12 @@ train:
 
 
 val:
-  val_freq: !!float 1000
+  val_freq: !!float 1
   save_img: false
   pbar: True
 
 logger:
-  print_freq: 100
+  print_freq: 1
   save_checkpoint_freq: 1000
   use_tb_logger: true
   wandb:

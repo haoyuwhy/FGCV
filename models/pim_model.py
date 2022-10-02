@@ -50,7 +50,7 @@ class FGVC_PIM(BaseModel):
             load_path = self.opt['path'].get('pretrain_network_g', None)
             if load_path is not None:
                 param_key = self.opt['path'].get('param_key_g', 'params')
-                self.load_network(self.net_g_ema.module.net.backbone, load_path, self.opt['path'].get('strict_load_g', True), param_key)
+                self.load_network(self.net_g_ema.net.backbone, load_path, self.opt['path'].get('strict_load_g', True), param_key)
             else:
                 self.model_ema(0)  # copy net_g weight
             self.net_g_ema.eval()

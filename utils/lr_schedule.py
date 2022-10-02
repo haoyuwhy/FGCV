@@ -1,7 +1,7 @@
 import math
 import numpy as np
 from collections import Counter
-from torch.optim.lr_scheduler import _LRScheduler
+ 
 
 def cosine_decay(args, batchs: int, decay_type: int = 1):
     total_batchs = args.max_epochs * batchs

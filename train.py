@@ -73,8 +73,10 @@ def create_train_val_dataloader(opt, logger):
 
             num_iter_per_epoch = math.ceil(
                 len(train_set) * dataset_enlarge_ratio / (dataset_opt['batch_size_per_gpu'] * opt['world_size']))
-            total_iters = int(opt['train']['total_iter'])
-            total_epochs = math.ceil(total_iters / (num_iter_per_epoch))
+            # total_iters = int(opt['train']['total_iter'])
+            total_epochs=int(opt['train']['total_epochs'])
+            total_iters=total_epochs*num_iter_per_epoch
+            # total_epochs = math.ceil(total_iters / (num_iter_per_epoch))
             logger.info('Training statistics:'
                         f'\n\tNumber of train images: {len(train_set)}'
                         f'\n\tDataset enlarge ratio: {dataset_enlarge_ratio}'
@@ -151,7 +153,8 @@ def train_pipeline(root_path):
     # create train and validation dataloaders
     result = create_train_val_dataloader(opt, logger)
     train_loader, train_sampler, val_loaders, total_epochs, total_iters = result
-
+    opt['train']['scheduler']['periods']=[total_iters]
+    opt['train']['total_iter']=total_iters
     # create model
     model = build_model(opt)
     if resume_state:  # resume training
@@ -217,17 +220,17 @@ def train_pipeline(root_path):
                 logger.info('Saving models and training states.')
                 model.save(epoch, current_iter)
 
-            # validation
-            if opt.get('val') is not None and (current_iter % opt['val']['val_freq'] == 0):
-                if len(val_loaders) > 1:
-                    logger.warning('Multiple validation datasets are *only* supported by SRModel.')
-                for val_loader in val_loaders:
-                    model.validation(val_loader, current_iter, tb_logger, opt['val']['save_img'])
-
             data_timer.start()
             iter_timer.start()
             train_data = prefetcher.next()
         # end of iter
+
+        # validation
+        if opt.get('val') is not None and (current_iter % opt['val']['val_freq'] == 0):
+            if len(val_loaders) > 1:
+                logger.warning('Multiple validation datasets are *only* supported by SRModel.')
+            for val_loader in val_loaders:
+                model.validation(val_loader, current_iter, tb_logger, opt['val']['save_img'])
 
     # end of epoch
 

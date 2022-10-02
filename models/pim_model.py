@@ -73,6 +73,9 @@ class FGVC_PIM(BaseModel):
         self.setup_optimizers()
         self.setup_schedulers()
 
+    # def setup_schedulers(self):
+    #     pass
+
     def setup_optimizers(self):
         train_opt = self.opt['train']
         optim_params = []

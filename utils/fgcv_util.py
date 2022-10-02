@@ -11,7 +11,7 @@ from collections import defaultdict, deque
 import numpy as np
 import torch
 import torch.distributed as dist
-from tabulate import tabulate
+
 
 
 def set_random_seed(seed):

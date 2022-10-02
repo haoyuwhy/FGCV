@@ -113,11 +113,8 @@ class FGVC_PIM(BaseModel):
                                                     self.labels.unsqueeze(1).repeat(1, S).flatten(0))
                     loss += self.opt["lambda_s"] * loss_s
                 else:
-                    loss_s = torch.zeros(1)
-                if "loss_s" in loss_dict:
-                    loss_dict["loss_s"]+=loss_s
-                else:
-                    loss_dict["loss_s"]=loss_s
+                    loss_s = 0
+
             elif "drop_" in name:
                 if not self.opt["use_selection"]:
                     raise ValueError("Selector not use here.")
@@ -173,7 +170,6 @@ class FGVC_PIM(BaseModel):
 
         loss.backward()
         self.optimizer_g.step()
-
         self.log_dict = self.reduce_loss_dict(loss_dict)
 
         if self.ema_decay > 0:

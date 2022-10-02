@@ -36,9 +36,9 @@ network_g:
 
 
 path:
-  pretrain_network_g: E:\swin_large_patch4_window12_384_22k.pth
-  param_key_g: "model"
-  strict_load_g: False
+  pretrain_network_backbone: E:\swin_large_patch4_window12_384_22k.pth
+  param_key_backbone: "model"
+  strict_load_backbone: False
   resume_state: ~
 
 
@@ -67,13 +67,13 @@ train:
 
 
 val:
-  val_freq: !!float 1e3
+  val_freq: !!float 1
   save_img: false
   pbar: True
 
 logger:
-  print_freq: 10
-  save_checkpoint_freq: 1000
+  print_freq: 1
+  save_checkpoint_freq: 1
   use_tb_logger: true
   wandb:
     project: ~

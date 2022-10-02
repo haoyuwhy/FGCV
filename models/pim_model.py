@@ -26,10 +26,14 @@ class FGVC_PIM(BaseModel):
         # self.print_network(self.net_g)
 
         # load pretrained models
+        load_path_backbone = self.opt['path'].get('pretrain_network_backbone', None)
         load_path = self.opt['path'].get('pretrain_network_g', None)
         if load_path is not None:
-            param_key = self.opt['path'].get('param_key_g', 'params')
-            self.load_network(self.net_g.module.net.backbone, load_path, self.opt['path'].get('strict_load_g', True), param_key)
+             param_key = self.opt['path'].get('param_key_g', 'params_ema')
+             self.load_network(self.net_g, load_path, self.opt['path'].get('strict_load_g', True), param_key)
+        elif load_path_backbone is not None:
+            param_key = self.opt['path'].get('param_key_backbone', 'params')
+            self.load_network(self.net_g.module.net.backbone, load_path_backbone, self.opt['path'].get('strict_load_backbone', True), param_key)
 
         if self.is_train:
             self.init_training_settings()
@@ -47,10 +51,14 @@ class FGVC_PIM(BaseModel):
             # There is no need to wrap with DistributedDataParallel
             self.net_g_ema = build_network(self.opt['network_g']).to(self.device)
             # load pretrained model
+            load_path_backbone = self.opt['path'].get('pretrain_network_backbone', None)
             load_path = self.opt['path'].get('pretrain_network_g', None)
             if load_path is not None:
-                param_key = self.opt['path'].get('param_key_g', 'params')
-                self.load_network(self.net_g_ema.net.backbone, load_path, self.opt['path'].get('strict_load_g', True), param_key)
+                param_key = self.opt['path'].get('param_key_g', 'params_ema')
+                self.load_network(self.net_g_ema, load_path, self.opt['path'].get('strict_load_g', True), param_key)
+            elif load_path_backbone is not None:
+                param_key = self.opt['path'].get('param_key_backbone', 'params')
+                self.load_network(self.net_g_ema.net.backbone, load_path_backbone, self.opt['path'].get('strict_load_backbone', True), param_key)
             else:
                 self.model_ema(0)  # copy net_g weight
             self.net_g_ema.eval()
@@ -61,15 +69,6 @@ class FGVC_PIM(BaseModel):
         else:
             self.crossentropyLoss = None
 
-        if train_opt.get('perceptual_opt'):
-            self.cri_perceptual = build_loss(train_opt['perceptual_opt']).to(self.device)
-        else:
-            self.cri_perceptual = None
-
-        # if self.crossentropyLoss is None and self.cri_perceptual is None:
-        #     raise ValueError('Both pixel and perceptual losses are None.')
-
-        # set up optimizers and schedulers
         self.setup_optimizers()
         self.setup_schedulers()
 
@@ -169,9 +168,6 @@ class FGVC_PIM(BaseModel):
 
 
         loss.backward()
-        for name, param in self.net_g.named_parameters():
-            if param.grad is None:
-                print(name)
         self.optimizer_g.step()
         self.log_dict = self.reduce_loss_dict(loss_dict)
 

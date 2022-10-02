@@ -21,7 +21,7 @@ datasets:
   train:
     name: CUB_200_2011
     type: FGVCDataset
-    batch_size_per_gpu: 4
+    batch_size_per_gpu: 1
     num_worker_per_gpu: 0
     
   val:

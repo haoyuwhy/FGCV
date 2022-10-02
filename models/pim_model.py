@@ -169,6 +169,9 @@ class FGVC_PIM(BaseModel):
 
 
         loss.backward()
+        for name, param in self.net_g.named_parameters():
+            if param.grad is None:
+                print(name)
         self.optimizer_g.step()
         self.log_dict = self.reduce_loss_dict(loss_dict)
 

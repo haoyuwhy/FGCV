@@ -499,9 +499,9 @@ class SwinTransformer(nn.Module):
             ]
         self.layers = nn.Sequential(*layers)
 
-        self.norm = norm_layer(self.num_features)
+        # self.norm = norm_layer(self.num_features)
         self.avgpool = nn.AdaptiveAvgPool1d(1)
-        self.head = nn.Linear(self.num_features, num_classes) if num_classes > 0 else nn.Identity()
+        # self.head = nn.Linear(self.num_features, num_classes) if num_classes > 0 else nn.Identity()
 
         assert weight_init in ('jax', 'jax_nlhb', 'nlhb', '')
         head_bias = -math.log(self.num_classes) if 'nlhb' in weight_init else 0.

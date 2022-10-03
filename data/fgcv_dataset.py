@@ -1,4 +1,5 @@
 from PIL import Image
+import PIL
 import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
@@ -40,13 +41,16 @@ class FGVCDataset(Dataset):
     def __getitem__(self, item):
         # print(str(self.images_path[item]).replace("._",""))#解决地址中出现 ._ 的错误地址
         # img = Image.open(self.images_path[item])
-        img = Image.open(str(self.images_path[item]).replace("._", ""))
+        try:
+            img = Image.open(str(self.images_path[item]).replace("._", ""))
+            label = self.images_class[item]
+        except PIL.UnidentifiedImageError:
+            img = Image.open(str(self.images_path[item-1]).replace("._", ""))
+            label = self.images_class[item-1]
         # RGB为彩色图片，L为灰度图片
         if img.mode != 'RGB':
             img = img.convert("RGB")
             # raise ValueError("image: {} isn't RGB mode.".format(self.images_path[item]))
-        label = self.images_class[item]
-
         if self.transform is not None:
             img = self.transform(img)
 

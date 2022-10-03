@@ -226,7 +226,7 @@ def train_pipeline(root_path):
         # end of iter
 
         # validation
-        if opt.get('val') is not None and (current_iter % opt['val']['val_freq'] == 0):
+        if opt.get('val') is not None:
             if len(val_loaders) > 1:
                 logger.warning('Multiple validation datasets are *only* supported by SRModel.')
             for val_loader in val_loaders:

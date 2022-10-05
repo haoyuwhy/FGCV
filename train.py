@@ -126,7 +126,7 @@ def load_resume_state(opt):
 def train_pipeline(root_path):
     # parse options, set distributed setting, set random seed
     opt, args = parse_options(root_path, is_train=True)
-    if args.rootpath is not None:
+    if hasattr(args,"root_path"):
         opt['root_path'] = args.rootpath
     else:
         opt['root_path'] = root_path

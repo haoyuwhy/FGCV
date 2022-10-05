@@ -30,8 +30,6 @@
             "args": [
                 "-opt",
                 "options/fgvc_swin.yml",
-                "--rootpath",
-                "E:/",
                 "--auto_resume"
             ],
             "console": "integratedTerminal",

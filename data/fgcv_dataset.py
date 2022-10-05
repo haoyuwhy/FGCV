@@ -46,7 +46,6 @@ class FGVCDataset(Dataset):
         if(self.opt['phase']!="test"):
             return img, label,self.images_path[item]
         else:
-            
             return [img.squeeze(0),osp.basename(self.images_path[item])]
 
     @staticmethod

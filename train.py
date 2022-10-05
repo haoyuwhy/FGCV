@@ -2,6 +2,7 @@ import datetime
 import logging
 import math
 import time
+from attr import has
 import torch
 from os import path as osp
 from PIL import Image
@@ -18,7 +19,7 @@ import data
 import models
 import archs
 import losses
-
+Image.MAX_IMAGE_PIXELS=400000000
 def init_tb_loggers(opt):
     # initialize wandb logger before tensorboard logger to allow proper sync
     if (opt['logger'].get('wandb') is not None) and (opt['logger']['wandb'].get('project')
@@ -125,7 +126,10 @@ def load_resume_state(opt):
 def train_pipeline(root_path):
     # parse options, set distributed setting, set random seed
     opt, args = parse_options(root_path, is_train=True)
-    opt['root_path'] = root_path
+    if args.rootpath is not None:
+        opt['root_path'] = args.rootpath
+    else:
+        opt['root_path'] = root_path
 
     torch.backends.cudnn.benchmark = True
     # torch.backends.cudnn.deterministic = True
@@ -219,6 +223,13 @@ def train_pipeline(root_path):
             if current_iter % opt['logger']['save_checkpoint_freq'] == 0:
                 logger.info('Saving models and training states.')
                 model.save(epoch, current_iter)
+            
+            if opt.get('val') is not None and (current_iter % opt['val']['val_freq'] == 0):
+                if len(val_loaders) > 1:
+                    logger.warning('Multiple validation datasets are *only* supported by SRModel.')
+                for val_loader in val_loaders:
+                    model.validation(val_loader, current_iter, tb_logger, opt['val']['save_img'])
+
 
             data_timer.start()
             iter_timer.start()
@@ -226,12 +237,7 @@ def train_pipeline(root_path):
         # end of iter
 
         # validation
-        if opt.get('val') is not None:
-            if len(val_loaders) > 1:
-                logger.warning('Multiple validation datasets are *only* supported by SRModel.')
-            for val_loader in val_loaders:
-                model.validation(val_loader, current_iter, tb_logger, opt['val']['save_img'])
-
+        
     # end of epoch
 
     consumed_time = str(datetime.timedelta(seconds=int(time.time() - start_time)))

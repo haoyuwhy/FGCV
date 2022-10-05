@@ -7,7 +7,7 @@ import pickle
 import random
 import time
 from collections import defaultdict, deque
-
+import math
 import numpy as np
 import torch
 import torch.distributed as dist
@@ -55,7 +55,7 @@ def read_split_data(root: str, val_rate: float = 0.1):
         # 记录该类别的样本数量
         every_class_num.append(len(images))
         # 按比例随机采样验证样本
-        val_path = random.sample(images, k=int(len(images) * val_rate))
+        val_path = random.sample(images, k=math.ceil(len(images) * val_rate))
 
         for img_path in images:
             if img_path in val_path:  # 如果该路径在采样的验证集样本中则存入验证集

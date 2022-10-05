@@ -6,7 +6,7 @@ from torchvision import transforms
 from basicsr.utils.registry import DATASET_REGISTRY
 from os import path as osp
 from torch.utils import data as data
-
+from basicsr.utils import scandir
 
 @DATASET_REGISTRY.register()
 class FGVCDataset(Dataset):
@@ -15,26 +15,14 @@ class FGVCDataset(Dataset):
     def __init__(self, opt):
         self.opt=opt
         self.images_path = opt["images_path"]
-        self.images_class = opt["images_class"]
+        if type(self.images_path)==str:
+            self.paths = [osp.join( self.images_path, v)
+                    for v in list(scandir( self.images_path))]
+            self.images_path=self.paths
+        if(opt['phase']!="test"):
+            self.images_class = opt["images_class"]
         self.transform = opt["transform"]
-        # normalize = transforms.Normalize(
-        #     mean=[0.485, 0.456, 0.406],
-        #     std=[0.229, 0.224, 0.225]
-        # )
-        # data_transform = {
-        # "train": transforms.Compose([
-        #                             transforms.Resize((510, 510), Image.BILINEAR),
-        #                             transforms.RandomCrop((cfg.INPUT.data_size, cfg.INPUT.data_size)),
-        #                             transforms.RandomHorizontalFlip(),
-        #                             transforms.RandomApply([transforms.GaussianBlur(kernel_size=(5, 5), sigma=(0.1, 5))], p=0.1),
-        #                             transforms.RandomAdjustSharpness(sharpness_factor=1.5, p=0.1),
-        #                             transforms.ToTensor(),
-        #                             normalize]),
 
-        # "val": transforms.Compose([transforms.Resize((510, 510), Image.BILINEAR),
-        #                            transforms.CenterCrop((cfg.INPUT.data_size, cfg.INPUT.data_size)),
-        #                            transforms.ToTensor(),
-        #                            normalize])}
     def __len__(self):
         return len(self.images_path)
 
@@ -43,18 +31,23 @@ class FGVCDataset(Dataset):
         # img = Image.open(self.images_path[item])
         try:
             img = Image.open(str(self.images_path[item]).replace("._", ""))
-            label = self.images_class[item]
+            if(self.opt['phase']!="test"):
+                label = self.images_class[item]
         except PIL.UnidentifiedImageError:
             img = Image.open(str(self.images_path[item-1]).replace("._", ""))
-            label = self.images_class[item-1]
+            if(self.opt['phase']!="test"):
+                label = self.images_class[item-1]
         # RGB为彩色图片，L为灰度图片
         if img.mode != 'RGB':
             img = img.convert("RGB")
             # raise ValueError("image: {} isn't RGB mode.".format(self.images_path[item]))
         if self.transform is not None:
             img = self.transform(img)
-
-        return img, label
+        if(self.opt['phase']!="test"):
+            return img, label,self.images_path[item]
+        else:
+            
+            return [img.squeeze(0),osp.basename(self.images_path[item])]
 
     @staticmethod
     def collate_fn(batch):

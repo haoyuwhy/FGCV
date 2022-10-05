@@ -2,11 +2,16 @@ import logging
 import torch
 from os import path as osp
 
+from PIL import Image
+from torchvision import transforms
 from basicsr.data import build_dataloader, build_dataset
 from basicsr.models import build_model
 from basicsr.utils import get_env_info, get_root_logger, get_time_str, make_exp_dirs
 from basicsr.utils.options import dict2str, parse_options
-
+import data
+import models
+import archs
+import losses
 
 def test_pipeline(root_path):
     # parse options, set distributed setting, set ramdom seed
@@ -24,7 +29,28 @@ def test_pipeline(root_path):
 
     # create test dataset and dataloader
     test_loaders = []
+    normalize = transforms.Normalize(
+            mean=[0.485, 0.456, 0.406],
+            std=[0.229, 0.224, 0.225]
+        )
+    
+    data_transform = {
+        "train": transforms.Compose([
+                                    transforms.Resize((opt["resize_size"], opt["resize_size"]), Image.BILINEAR),
+                                    transforms.RandomCrop((opt["data_size"], opt["data_size"])),
+                                    transforms.RandomHorizontalFlip(),
+                                    transforms.RandomApply([transforms.GaussianBlur(kernel_size=(5, 5), sigma=(0.1, 5))], p=0.1),
+                                    transforms.RandomAdjustSharpness(sharpness_factor=1.5, p=0.1),
+                                    transforms.ToTensor(),
+                                    normalize]),
+
+        "val": transforms.Compose([transforms.Resize((opt["resize_size"], opt["resize_size"]), Image.BILINEAR),
+                                   transforms.CenterCrop((opt["data_size"], opt["data_size"])),
+                                   transforms.ToTensor(),
+                                   normalize])}
+    
     for _, dataset_opt in sorted(opt['datasets'].items()):
+        dataset_opt["transform"]=data_transform["val"]
         test_set = build_dataset(dataset_opt)
         test_loader = build_dataloader(
             test_set, dataset_opt, num_gpu=opt['num_gpu'], dist=opt['dist'], sampler=None, seed=opt['manual_seed'])
@@ -37,7 +63,7 @@ def test_pipeline(root_path):
     for test_loader in test_loaders:
         test_set_name = test_loader.dataset.opt['name']
         logger.info(f'Testing {test_set_name}...')
-        model.validation(test_loader, current_iter=opt['name'], tb_logger=None, save_img=opt['val']['save_img'])
+        model.validation(test_loader, current_iter=opt['name'], tb_logger=None)
 
 
 if __name__ == '__main__':

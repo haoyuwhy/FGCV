@@ -5,7 +5,7 @@ dataroot: F:\ImageData\CUB_200_2011\images
 resize_size: 510
 data_size: 384
 auto_resume: 1
-val_rate: 0.1
+val_rate: 0.01
 
 
 use_selection: True
@@ -32,6 +32,11 @@ datasets:
 network_g:
   type: SwinTransfomer
   fpn_size: 1536
+  num_selects: 
+    layer1: 2048
+    layer2: 512
+    layer3: 128
+    layer4: 32
   pretrain: False
   use_checkpoint: True
 
@@ -44,7 +49,7 @@ path:
 
 
 train:
-  ema_decay: 0.999
+  # ema_decay: 0.999
   warmup_iter: 800
   optim_g:
     type: SGD
@@ -68,12 +73,13 @@ train:
 
 
 val:
-  val_freq: !!float 1e3
+  val_freq: !!float 1
   save_img: false
   pbar: True
 
+
 logger:
-  print_freq: 10
+  print_freq: 1
   save_checkpoint_freq: 1000
   use_tb_logger: true
   wandb:

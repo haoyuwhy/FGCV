@@ -1,0 +1,43 @@
+name: FGVC_Swin_test
+suffix: ~  # add suffix to saved images
+model_type: FGVC_PIMtest
+num_gpu: auto
+phase: test
+resize_size: 510
+data_size: 384
+auto_resume: 1
+val_rate: 0.1
+
+use_selection: True
+use_amp: True
+use_fpn: True
+use_combiner: True
+lambda_b: 0.5
+lambda_s: 0.0
+lambda_n: 5.0
+lambda_c: 1.0
+
+lables: 5000
+datasets:
+  test_1:
+    name: ACCV2022_test
+    type: FGVCDataset
+    images_path: F:\ImageData\testa
+    batch_size_per_gpu: 4
+    num_worker_per_gpu: 2
+    
+# network structures
+network_g:
+  type: SwinTransfomer
+  fpn_size: 1536
+  pretrain: False
+  use_checkpoint: True
+
+val:
+  val_freq: !!float 1e3
+  save_img: false
+  pbar: True
+# path
+path:
+  pretrain_network_g: E:/hpc/FGVC_checkpoint/net_g_47102.pth
+  strict_load_g: true

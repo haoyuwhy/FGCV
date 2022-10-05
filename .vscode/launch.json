@@ -30,7 +30,21 @@
             "args": [
                 "-opt",
                 "options/fgvc_swin.yml",
+                "--rootpath",
+                "E:/",
                 "--auto_resume"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "test",
+            "type": "python",
+            "request": "launch",
+            "program": "test.py",
+            "args": [
+                "-opt",
+                "options/fgvc_swin_test.yml",
             ],
             "console": "integratedTerminal",
             "justMyCode": true

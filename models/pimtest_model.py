@@ -13,12 +13,15 @@ from basicsr.utils import get_root_logger
 from basicsr.utils.registry import MODEL_REGISTRY
 from .base_model import BaseModel
 
+import csv
+
 @MODEL_REGISTRY.register()
-class FGVC_PIM(BaseModel):
+class FGVC_PIMtest(BaseModel):
     def __init__(self, opt):
-        super(FGVC_PIM, self).__init__(opt)
+        super(FGVC_PIMtest, self).__init__(opt)
         opt['network_g']["lables"]=opt["lables"]
-        self.batchsize=opt["datasets"]["train"]["batch_size_per_gpu"]
+        if opt["phase"]!="test":
+            self.batchsize=opt["datasets"]["train"]["batch_size_per_gpu"]
         self.opt=opt
         # define network
         self.net_g = build_network(opt['network_g'])
@@ -33,7 +36,7 @@ class FGVC_PIM(BaseModel):
              self.load_network(self.net_g, load_path, self.opt['path'].get('strict_load_g', True), param_key)
         elif load_path_backbone is not None:
             param_key = self.opt['path'].get('param_key_backbone', 'params')
-            self.load_network(self.net_g.net.backbone, load_path_backbone, self.opt['path'].get('strict_load_backbone', True), param_key)
+            self.load_network(self.net_g.module.net.backbone, load_path_backbone, self.opt['path'].get('strict_load_backbone', True), param_key)
 
         if self.is_train:
             self.init_training_settings()
@@ -63,15 +66,6 @@ class FGVC_PIM(BaseModel):
                 self.model_ema(0)  # copy net_g weight
             self.net_g_ema.eval()
 
-        # define losses
-        if train_opt.get('CrossentropyLoss_opt'):
-            self.crossentropyLoss = build_loss(train_opt['CrossentropyLoss_opt']).to(self.device)
-        else:
-            self.crossentropyLoss = None
-
-        self.setup_optimizers()
-        self.setup_schedulers()
-
 
 
 
@@ -91,88 +85,10 @@ class FGVC_PIM(BaseModel):
 
     def feed_data(self, data):
         self.input = data[0].to(self.device)
-        self.lables= data[1].to(self.device)
-        self.name=data[2]
-
-
-    def optimize_parameters(self, current_iter):
-        self.optimizer_g.zero_grad()
-        outs = self.net_g(self.input)
-
-        loss = 0
-        loss_dict = OrderedDict()
-        for name in outs:
-            if "select_" in name:
-                if not self.opt["use_selection"]:
-                    raise ValueError("Selector not use here.")
-                if self.opt["lambda_s"] != 0:
-                    S = outs[name].size(1)
-                    logit = outs[name].view(-1, self.opt["lables"]).contiguous()
-                    loss_s = nn.CrossEntropyLoss()(logit, 
-                                                    self.labels.unsqueeze(1).repeat(1, S).flatten(0))
-                    loss += self.opt["lambda_s"] * loss_s
-                else:
-                    loss_s = 0
-
-            elif "drop_" in name:
-                if not self.opt["use_selection"]:
-                    raise ValueError("Selector not use here.")
-                if self.opt["lambda_n"]!= 0:
-                    S = outs[name].size(1)
-                    logit = outs[name].view(-1, self.opt["lables"]).contiguous()
-                    n_preds = nn.Tanh()(logit)
-                    labels_0 = torch.zeros([self.batchsize * S, self.opt["lables"]]) - 1
-                    labels_0 = labels_0.to(self.device)
-                    loss_n = nn.MSELoss()(n_preds, labels_0)
-                    loss += self.opt["lambda_n"] * loss_n
-                else:
-                    loss_n = 0.0
-                if "loss_n" in loss_dict:
-                    loss_dict["loss_n"]+=loss_n
-                else:
-                    loss_dict["loss_n"]=loss_n
-
-            elif "layer" in name:
-                if not self.opt["use_fpn"]:
-                    raise ValueError("FPN not use here.")
-                if self.opt["lambda_b"] != 0:
-                    ### here using 'layer1'~'layer4' is default setting, you can change to your own
-                    loss_b = nn.CrossEntropyLoss()(outs[name].mean(1), self.lables)
-                    loss += self.opt["lambda_b"] * loss_b
-                else:
-                    loss_b = 0.0
-                if "loss_b" in loss_dict:
-                    loss_dict["loss_b"]+=loss_b
-                else:
-                    loss_dict["loss_b"]=loss_b
-            
-            elif "comb_outs" in name:
-                if not self.opt["use_combiner"]:
-                    raise ValueError("Combiner not use here.")
-
-                if self.opt["lambda_c"]!= 0:
-                    loss_c = nn.CrossEntropyLoss()(outs[name], self.lables)
-                    loss += self.opt["lambda_c"] * loss_c
-                if "loss_c" in loss_dict:
-                    loss_dict["loss_c"]+=loss_c
-                else:
-                    loss_dict["loss_c"]=loss_c
-
-            elif "ori_out" in name:
-                loss_ori = F.cross_entropy(outs[name], self.labels)
-                loss += loss_ori
-                if "loss_ori" in loss_dict:
-                    loss_dict["loss_ori"]+=loss_ori
-                else:
-                    loss_dict["loss_ori"]=loss_ori
-
-
-        loss.backward()
-        self.optimizer_g.step()
-        self.log_dict = self.reduce_loss_dict(loss_dict)
-
-        if self.ema_decay > 0:
-            self.model_ema(decay=self.ema_decay)
+        if self.opt['phase']!="test":
+            self.lables= data[1].to(self.device)
+        else:
+            self.imgname=data[1][0]
 
     def test(self):
         if hasattr(self, 'net_g_ema'):
@@ -253,41 +169,47 @@ class FGVC_PIM(BaseModel):
     def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
         dataset_name = dataloader.dataset.opt['name']
         use_pbar = self.opt['val'].get('pbar', False)
-        self.metric_results = {"acc": 0}
+        self.metric_results = {"acc": 0,"loss":0}
         self._initialize_best_metric_results(dataset_name)
         corrects = {}
         total_samples = {}
+        layeras_result={}
+        if self.opt["use_fpn"]:
+            for i in range(1, 5):
+                layeras_result["layer" + str(i)]=[]
+        if self.opt["use_combiner"]:
+            layeras_result["comb_outs"]=[]
         if use_pbar:
             pbar = tqdm(total=len(dataloader), unit='image')
 
         for idx, val_data in enumerate(dataloader):
             # img_name = osp.splitext(osp.basename(val_data['lq_path'][0]))[0]
             self.feed_data(val_data)
-            if use_pbar:
-                pbar.update(1)
-                pbar.set_description(f'Test {idx}, Img {val_data[2][0]}')
             self.test()
-            score_names = []
-            scores = []
-            
             if self.opt["use_fpn"]:
                 for i in range(1, 5):
                     this_name = "layer" + str(i)
-                    _cal_evalute_metric(corrects, total_samples, self.output[this_name].mean(1), self.lables, this_name, scores, score_names)
-            _average_top_k_result(corrects, total_samples, scores, self.lables,tops=[i for i in range(1, 5)])
+                    tmp_score = torch.softmax(self.output[this_name].mean(1), dim=-1)
+                    sorted_preds = torch.sort(tmp_score, dim=-1, descending=True)[1][0][0].cpu().numpy()
+                    layeras_result[this_name].append([self.imgname,sorted_preds])
             if self.opt["use_combiner"]:
                 this_name = "combiner"
-                _cal_evalute_metric(corrects, total_samples, self.output["comb_outs"], self.lables, this_name, scores, score_names)
+                tmp_score = torch.softmax(self.output["comb_outs"], dim=-1)
+                sorted_preds = torch.sort(tmp_score, dim=-1, descending=True)[1][0][0].cpu().numpy()
+                layeras_result["comb_outs"].append([self.imgname,sorted_preds])
+                # _cal_evalute_metric(corrects, total_samples, self.output["comb_outs"], self.lables, this_name, scores, score_names)
             # loss=self.crossentropyLoss(self.output, self.lables)
             # if self.output.argmax()==self.lables:
             #     self.metric_results["acc"]+=1
             # self.metric_results["loss"] += loss
-
+            if use_pbar:
+                pbar.update(1)
+                pbar.set_description(f'Test {idx}')
         if use_pbar:
             pbar.close()
 
         best_top1 = 0.0
-        self.best_top1_name = ""
+        best_top1_name = ""
         eval_acces = {}
         for name in corrects:
             acc = corrects[name] / total_samples[name]
@@ -297,7 +219,7 @@ class FGVC_PIM(BaseModel):
             if "top-1" in name or "highest" in name:
                 if acc >= best_top1:
                     best_top1 = acc
-                    self.best_top1_name = name
+                    best_top1_name = name
 
         self.metric_results["acc"] = best_top1
         # self.metric_results["loss"] /= (idx + 1)
@@ -312,7 +234,7 @@ class FGVC_PIM(BaseModel):
             log_str += f'\t # {metric}: {value:.4f}'
             if hasattr(self, 'best_metric_results'):
                 log_str += (f'\tBest: {self.best_metric_results[dataset_name][metric]["val"]:.4f} @ '
-                            f'{self.best_metric_results[dataset_name][metric]["iter"]} iter @ '+self.best_top1_name)
+                            f'{self.best_metric_results[dataset_name][metric]["iter"]} iter')
             log_str += '\n'
 
         logger = get_root_logger()

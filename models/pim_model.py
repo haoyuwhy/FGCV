@@ -2,6 +2,7 @@ from basicsr.utils import get_root_logger
 from basicsr.utils.registry import MODEL_REGISTRY
 import torch
 import torch.nn as nn
+from torch.nn.parallel import DataParallel, DistributedDataParallel
 import torch.nn.functional as F
 from collections import OrderedDict
 from os import path as osp
@@ -33,7 +34,9 @@ class FGVC_PIM(BaseModel):
              self.load_network(self.net_g, load_path, self.opt['path'].get('strict_load_g', True), param_key)
         elif load_path_backbone is not None:
             param_key = self.opt['path'].get('param_key_backbone', 'params')
-            self.load_network(self.net_g.net.backbone, load_path_backbone, self.opt['path'].get('strict_load_backbone', True), param_key)
+            if isinstance(self.net_g, (DataParallel, DistributedDataParallel)):
+                net = self.net_g.module
+            self.load_network(net.net.backbone, load_path_backbone, self.opt['path'].get('strict_load_backbone', True), param_key)
 
         if self.is_train:
             self.init_training_settings()
